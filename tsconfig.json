@@ -1,0 +1,10 @@
+{
+  "extends": ["@tsconfig/node18"],
+  "compilerOptions": {
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noUnusedLocals": true,
+    "pretty": true,
+  }
+}

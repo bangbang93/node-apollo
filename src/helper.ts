@@ -1,11 +1,11 @@
 'use strict';
 
-const assert = require('assert');
+import assert from 'assert'
 
-module.exports = {
+export default {
   // https://stackoverflow.com/questions/3710204/how-to-check-if-a-string-is-a-valid-json-string-in-javascript-without-using-try
   // 先判断是否是JSON String 格式，不是则直接返回原始string
-  toJSON(str) {
+  toJSON(str: string) {
     if (/^[\],:{}\s]*$/.test(str.replace(/\\["\\\/bfnrtu]/g, '@').
       replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').
       replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
@@ -15,7 +15,7 @@ module.exports = {
     }
   },
 
-  mergeConfig(payload) {
+  mergeConfig(payload: any[]) {
     assert(Array.isArray(payload), 'Apollo config should be an array');
     const publicPayload = [];
     const privatePayload = [];
@@ -33,7 +33,7 @@ module.exports = {
   },
 
   // 合并配置
-  mergeConfigurations(payload) {
+  mergeConfigurations(payload: any[]) {
     assert(Array.isArray(payload), 'Apollo config should be an array');
     try {
       // 从缓存和非缓存获取的response报文不一致
@@ -44,10 +44,10 @@ module.exports = {
     }
   },
 
-  _itemsPick(items, keys) {
+  _itemsPick(items: any, keys: string[]) {
     const ret = [];
     for (let item of items) {
-      let obj = {};
+      let obj: any = {};
       obj[item.key] = this.toJSON(item.value);
       ret.push(obj);
     }
@@ -55,7 +55,7 @@ module.exports = {
   },
 
   // clientIp这个参数是可选的，用来实现灰度发布。 如果不想传这个参数，请注意URL中从?号开始的query parameters整个都不要出现。
-  getConfigFromApolloUri(config) {
+  getConfigFromApolloUri(config: any) {
     // 读取环境变量
     const { configServerUrl, appId, clusterName, namespaceName, clientIp } = config;
     assert(configServerUrl, 'configServerUrl is required');
@@ -73,7 +73,7 @@ module.exports = {
   },
 
   // 获取集群下所有Namespace信息接口
-  getAllConfigFromApolloUri(config) {
+  getAllConfigFromApolloUri(config: any) {
     const { configServerUrl, appId, clusterName, apolloEnv } = config;
     assert(configServerUrl, 'configServerUrl is required');
     assert(appId, 'appId is required');
@@ -84,7 +84,7 @@ module.exports = {
   },
 
   // 通过带缓存的Http接口从Apollo读取配置
-  getConfigFromCacheUri(config) {
+  getConfigFromCacheUri(config: any) {
     const { configServerUrl, appId, clusterName, namespaceName, clientIp } = config;
     assert(configServerUrl, 'configServerUrl is required');
     assert(namespaceName, 'namespaceName is required');
@@ -96,7 +96,7 @@ module.exports = {
     } else {
       return [url(namespaceName)];
     }
-    function url(namespace) {
+    function url(namespace: string) {
       if (clientIp) {
         return `${configServerUrl}/configfiles/json/${appId}/${clusterName}/${namespace}?ip=${clientIp}`
       } else {
@@ -104,26 +104,26 @@ module.exports = {
       }
     }
   },
+};
 
-  // 通过不带缓存的Http接口从Apollo读取配置
-  getConfigSkipCacheUri(config) {
-    const { configServerUrl, appId, clusterName, namespaceName, releaseKey, clientIp } = config;
-    assert(configServerUrl, 'configServerUrl is required');
-    assert(namespaceName, 'namespaceName is required');
-    assert(appId, 'appId is required');
-    assert(clusterName, 'clusterName is required');
-    if (Array.isArray(namespaceName)) {
-      if (namespaceName.length === 0) return [url('application')];
-      return namespaceName.map(n => url(n));
+// 通过不带缓存的Http接口从Apollo读取配置
+export function getConfigSkipCacheUri(config: any): string[] {
+  const { configServerUrl, appId, clusterName, namespaceName, releaseKey, clientIp } = config;
+  assert(configServerUrl, 'configServerUrl is required');
+  assert(namespaceName, 'namespaceName is required');
+  assert(appId, 'appId is required');
+  assert(clusterName, 'clusterName is required');
+  if (Array.isArray(namespaceName)) {
+    if (namespaceName.length === 0) return [url('application')];
+    return namespaceName.map(n => url(n));
+  } else {
+    return [url(namespaceName)];
+  }
+  function url(namespace: string) {
+    if (clientIp) {
+      return `${configServerUrl}/configs/${appId}/${clusterName}/${namespace}?releaseKey=${releaseKey}&ip=${clientIp}`
     } else {
-      return [url(namespaceName)];
-    }
-    function url(namespace) {
-      if (clientIp) {
-        return `${configServerUrl}/configs/${appId}/${clusterName}/${namespace}?releaseKey=${releaseKey}&ip=${clientIp}`
-      } else {
-        return `${configServerUrl}/configs/${appId}/${clusterName}/${namespace}?releaseKey=${releaseKey}`
-      }
+      return `${configServerUrl}/configs/${appId}/${clusterName}/${namespace}?releaseKey=${releaseKey}`
     }
   }
-};
+}
