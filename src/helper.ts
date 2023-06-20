@@ -1,14 +1,14 @@
-'use strict';
-
-import assert from 'assert'
-
+export interface IGetConfigSkipCacheUri {
+  configServerUrl: string
+  appId: string
+  clusterName: string
+  namespaceName: string | string[]
+  releaseKey: string
+  clientIp?: string
+}
 // 通过不带缓存的Http接口从Apollo读取配置
-export function getConfigSkipCacheUri(config: any): string[] {
+export function getConfigSkipCacheUri(config: IGetConfigSkipCacheUri): string[] {
   const { configServerUrl, appId, clusterName, namespaceName, releaseKey, clientIp } = config;
-  assert(configServerUrl, 'configServerUrl is required');
-  assert(namespaceName, 'namespaceName is required');
-  assert(appId, 'appId is required');
-  assert(clusterName, 'clusterName is required');
   if (Array.isArray(namespaceName)) {
     if (namespaceName.length === 0) return [url('application')];
     return namespaceName.map(n => url(n));
@@ -35,16 +35,23 @@ function toJSON(str: string) {
   }
 }
 
+interface IPayload {
+  isPublic: boolean
+  items: {
+    key: string
+    value: string
+  }[]
+}
+
 // 合并配置
-export function mergeConfig(payload: any[]): Record<string, string> {
-  assert(Array.isArray(payload), 'Apollo config should be an array');
+export function mergeConfig(payload: IPayload[]): Record<string, string> {
   const publicPayload = [];
   const privatePayload = [];
   for (let meta of payload) {
     if (meta.isPublic) {
-      publicPayload.push(..._itemsPick(meta.items, ['key', 'value']));
+      publicPayload.push(..._itemsPick(meta.items));
     } else {
-      privatePayload.push(..._itemsPick(meta.items, ['key', 'value']));
+      privatePayload.push(..._itemsPick(meta.items));
     }
   }
   // Apollo配置加载顺序如下，后加载的会覆盖前面的同名配置
@@ -54,52 +61,33 @@ export function mergeConfig(payload: any[]): Record<string, string> {
 }
 
 export function mergeConfigurations(payload: any[]) {
-  assert(Array.isArray(payload), 'Apollo config should be an array');
-  try {
-    // 从缓存和非缓存获取的response报文不一致
-    const confs = payload.map(pl => pl.data.content ? JSON.parse(pl.data.content) : (pl.data.configurations || pl.data));
-    return Object.assign({}, ...confs);
-  } catch(err) {
-    assert(err, 'Apollo configs not be merged');
-  }
+  // 从缓存和非缓存获取的response报文不一致
+  const confs = payload.map(pl => pl.data.content ? JSON.parse(pl.data.content) : (pl.data.configurations || pl.data));
+  return Object.assign({}, ...confs);
 }
 
-// clientIp这个参数是可选的，用来实现灰度发布。 如果不想传这个参数，请注意URL中从?号开始的query parameters整个都不要出现。
-export function getConfigFromApolloUri(config: any) {
-  // 读取环境变量
-  const { configServerUrl, appId, clusterName, namespaceName, clientIp } = config;
-  assert(configServerUrl, 'configServerUrl is required');
-  assert(appId, 'appId is required');
-  assert(clusterName, 'clusterName is required');
-  assert(namespaceName, 'namespaceName is required');
-  let apolloString;
-  if (clientIp) {
-    apolloString = `${configServerUrl}/configfiles/json/${appId}/${clusterName}/${namespaceName}?ip=${clientIp}`;
-  } else {
-    apolloString = `${configServerUrl}/configfiles/json/${appId}/${clusterName}/${namespaceName}`;
-  }
-
-  return apolloString;
+interface IGetAllConfigFromApolloUri {
+  configServerUrl: string
+  appId: string
+  clusterName: string
+  apolloEnv: string
 }
-
 // 获取集群下所有Namespace信息接口
-export function getAllConfigFromApolloUri(config: any) {
+export function getAllConfigFromApolloUri(config: IGetAllConfigFromApolloUri) {
   const { configServerUrl, appId, clusterName, apolloEnv } = config;
-  assert(configServerUrl, 'configServerUrl is required');
-  assert(appId, 'appId is required');
-  assert(clusterName, 'clusterName is required');
-  let apolloString = `${configServerUrl}/openapi/v1/envs/${apolloEnv}/apps/${appId}/clusters/${clusterName}/namespaces`;
-
-  return apolloString;
+  return `${configServerUrl}/openapi/v1/envs/${apolloEnv}/apps/${appId}/clusters/${clusterName}/namespaces`;
 }
 
+interface IGetConfigFromCacheUri {
+  configServerUrl: string
+  appId: string
+  clusterName: string
+  namespaceName: string | string[]
+  clientIp?: string
+}
 // 通过带缓存的Http接口从Apollo读取配置
-export function getConfigFromCacheUri(config: any) {
+export function getConfigFromCacheUri(config: IGetConfigFromCacheUri) {
   const { configServerUrl, appId, clusterName, namespaceName, clientIp } = config;
-  assert(configServerUrl, 'configServerUrl is required');
-  assert(namespaceName, 'namespaceName is required');
-  assert(appId, 'appId is required');
-  assert(clusterName, 'clusterName is required');
   if (Array.isArray(namespaceName)) {
     if (namespaceName.length === 0) return [url('application')];
     return namespaceName.map(n => url(n));
@@ -115,7 +103,7 @@ export function getConfigFromCacheUri(config: any) {
   }
 }
 
-function _itemsPick(items: any, keys: string[]) {
+function _itemsPick(items: { key: string, value: string }[]) {
   const ret = [];
   for (let item of items) {
     let obj: any = {};
