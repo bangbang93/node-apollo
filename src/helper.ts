@@ -5,12 +5,13 @@ export interface IGetConfigSkipCacheUri {
   appId: string
   clusterName: string
   namespaceName: string | string[]
-  releaseKey: string
+  releaseKey?: string
   clientIp?: string
 }
 // 通过不带缓存的Http接口从Apollo读取配置
 export function getConfigSkipCacheUri(config: IGetConfigSkipCacheUri): string[] {
-  const {configServerUrl, appId, clusterName, namespaceName, releaseKey, clientIp} = config
+  const {configServerUrl, appId, clusterName, namespaceName, clientIp} = config
+  const releaseKey = config.releaseKey ?? ''
   if (Array.isArray(namespaceName)) {
     if (namespaceName.length === 0) return [url('application')]
     return namespaceName.map((n) => url(n))

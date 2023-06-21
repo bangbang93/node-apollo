@@ -1,20 +1,12 @@
-import assert from 'assert'
 import got from 'got'
-import {
-  getAllConfigFromApolloUri,
-  getConfigFromCacheUri,
-  getConfigSkipCacheUri,
-  IPayload,
-  mergeConfig,
-  mergeConfigurations,
-} from './helper'
+import {getAllConfigFromApolloUri, getConfigFromCacheUri, getConfigSkipCacheUri, IPayload, mergeConfig} from './helper'
 
 interface IRemoteConfigService {
   configServerUrl: string
   appId: string
   clusterName: string
   apolloEnv: string
-  token: string
+  token?: string
 }
 // Apollo开放平台接入方式
 export async function remoteConfigService(config: IRemoteConfigService): Promise<Record<string, string | undefined>> {
@@ -22,35 +14,33 @@ export async function remoteConfigService(config: IRemoteConfigService): Promise
     headers: {
       authorization: config.token,
     },
-    rejectUnauthorized: true,
     responseType: 'json',
   })
-  assert(res.statusCode === 200, 'apollo host unavailable, please contact your administrtor')
   return mergeConfig(res.body)
 }
 
-export interface IRemoteConfigServiceFromCache {
+export interface IRemoteConfigServiceSkipCache {
   configServerUrl: string
   appId: string
   clusterName: string
   namespaceName: string | string[]
-  releaseKey: string
+  releaseKey?: string
   clientIp?: string
 }
 // 通过不带缓存的Http接口从Apollo读取配置
 export async function remoteConfigServiceSkipCache(
-  config: IRemoteConfigServiceFromCache,
+  config: IRemoteConfigServiceSkipCache,
 ): Promise<Record<string, string | undefined>> {
   const options = {
-    rejectUnauthorized: true,
     responseType: 'json',
   } as const
   const uris: string[] = getConfigSkipCacheUri(config)
-  const bundle = await Promise.all(uris.map((uri) => got.get(uri, options)))
-  for (const res of bundle) {
-    assert(res.statusCode === 200, 'apollo host unavailable, please contact your administrtor')
+  const responses = await Promise.all(uris.map((uri) => got.get(uri, options)))
+  const ret = {}
+  for (const response of responses) {
+    Object.assign(ret, response.body)
   }
-  return mergeConfigurations(bundle)
+  return ret
 }
 
 export interface IRemoteConfigServiceFromCache {
@@ -65,13 +55,13 @@ export async function remoteConfigServiceFromCache(
   config: IRemoteConfigServiceFromCache,
 ): Promise<Record<string, string | undefined>> {
   const options = {
-    rejectUnauthorized: true,
     responseType: 'json',
   } as const
   const uris = getConfigFromCacheUri(config)
-  const bundle = await Promise.all(uris.map((uri) => got.get(uri, options)))
-  for (const res of bundle) {
-    assert(res.statusCode === 200, 'apollo host unavailable, please contact your administrtor')
+  const responses = await Promise.all(uris.map((uri) => got.get<object>(uri, options)))
+  const ret = {}
+  for (const response of responses) {
+    Object.assign(ret, response.body)
   }
-  return mergeConfigurations(bundle)
+  return ret
 }

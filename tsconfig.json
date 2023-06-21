@@ -6,5 +6,8 @@
     "emitDecoratorMetadata": true,
     "noUnusedLocals": true,
     "pretty": true,
+    "outDir": "lib",
+    "importHelpers": true,
+    "declaration": true
   }
 }
