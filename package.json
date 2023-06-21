@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "pretest": "tsc --noEmit",
-    "test": "mocha"
+    "test": "mocha",
+    "posttest": "npm run format",
+    "format": "prettier --loglevel warn --write \"**/*.{ts,tsx,css,md}\""
   },
   "repository": {
     "type": "git",
@@ -19,13 +21,21 @@
   "author": "bangbang93@163.com",
   "license": "MIT",
   "devDependencies": {
+    "@bangbang93/eslint-config-recommended": "^0.0.5",
     "@tsconfig/node18": "^2.0.1",
+    "@types/lodash": "^4.14.195",
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
+    "eslint": "^8.43.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "mocha": "^3.5.3",
+    "prettier": "^2.8.8",
+    "prettier-plugin-organize-imports": "^3.2.2",
     "typescript": "^5.1.3"
   },
   "dependencies": {
-    "dotenv": "^4.0.0",
     "got": "^11.8.6",
-    "ow": "^0.28.2"
+    "lodash": "^4.17.21"
   }
 }
