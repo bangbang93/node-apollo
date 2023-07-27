@@ -9,7 +9,8 @@
     "test": "jest",
     "posttest": "npm run format",
     "format": "prettier --loglevel warn --write \"**/*.{ts,tsx,css,md}\"",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
