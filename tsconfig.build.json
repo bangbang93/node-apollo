@@ -1,0 +1,14 @@
+{
+  "extends": ["@tsconfig/node18"],
+  "compilerOptions": {
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noUnusedLocals": true,
+    "pretty": true,
+    "outDir": "lib",
+    "importHelpers": true,
+    "declaration": true
+  },
+  "include": ["src/**/*"]
+}
